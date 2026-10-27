@@ -18,7 +18,8 @@ input,select,textarea{font:inherit;padding:8px;border:1px solid var(--bd);border
 .frow{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid var(--bd);cursor:pointer}.frow span:first-child{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .fb{flex:1;background:var(--bd);height:10px;border-radius:6px;overflow:hidden}.fb i{display:block;height:100%;background:var(--b)}
 .box{box-shadow:0 1px 3px rgba(15,23,42,.06);border-radius:12px}body{font-size:15px}.b{min-height:36px}
-@media(max-width:800px){#app{display:block}aside{position:sticky;top:0;z-index:5;width:100%;display:flex;overflow-x:auto;white-space:nowrap;padding:6px;border-inline-end:0;border-bottom:1px solid var(--bd);gap:4px;background:var(--c)}aside h1,aside hr,aside small{display:none}aside button{width:auto;flex:none;margin:0;padding:8px 12px;font-size:14px}header{display:none}main{padding:10px}.g4{grid-template-columns:1fr 1fr}}
+.navbg{display:none}
+@media(max-width:800px){#app{display:block}header{display:flex;gap:10px;align-items:center;background:var(--c);padding:10px;border-bottom:1px solid var(--bd);position:sticky;top:0;z-index:10}header b{color:var(--b);font-size:18px}aside{position:fixed;top:0;bottom:0;inset-inline-start:0;width:270px;max-width:85%;z-index:20;display:none;overflow-y:auto;padding:14px;white-space:normal}aside.o{display:block}aside h1{display:block}aside button{width:100%;margin:2px 0;padding:11px;font-size:15px;text-align:start}.navbg{display:block;position:fixed;inset:0;background:rgba(0,0,0,.35);z-index:15}main{padding:12px}.g4{grid-template-columns:1fr 1fr}}
 </style></head><body><div id="app"></div><div id="md"></div><div id="ts"></div>
 <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
@@ -79,7 +80,7 @@ auth.onAuthStateChanged(async u=>{un.forEach(f=>f());un=[];if(!u){me=null;return
 function draw(err){const A_=$('#app');if(!me){if(document.activeElement.tagName=='INPUT'&&!err)return;A_.innerHTML=`<div class="box lg"><h2>Mr. Sneak ERP</h2>${err?`<p class="no">${esc(err)}</p>`:''}<input id="le" type="email" placeholder="الإيميل" autocomplete="username"><input id="lp" type="password" placeholder="كلمة السر" autocomplete="current-password"><button class="b" id="lb" onclick="login()">دخول</button> <button class="b s" onclick="reset()">نسيت كلمة السر</button></div>`;return}
  const nav=NAV.filter(x=>pageOK(x[0]));
  if(!nav.some(x=>x[0]==view))view=nav[0]?nav[0][0]:'none';
- A_.innerHTML=`<header><button class="b" onclick="$('aside').classList.toggle('o')">☰</button><b>Mr. Sneak</b></header><aside><h1>Mr. Sneak ERP</h1>${nav.map(x=>`<button class="${x[0]==view?'on':''}" onclick="view='${x[0]}';draw()">${x[1]}</button>`).join('')}<hr><small>${esc(me.name)} — ${ROLES[me.role]}</small><button onclick="out()">تسجيل خروج</button></aside><main>${V[view]()}</main>`}
+ A_.innerHTML=`<header><button class="b" onclick="NAVO=!NAVO;draw()">☰</button><b>Mr. Sneak</b></header><aside class="${NAVO?'o':''}"><h1>Mr. Sneak ERP</h1>${nav.map(x=>`<button class="${x[0]==view?'on':''}" onclick="view='${x[0]}';NAVO=false;draw()">${x[1]}</button>`).join('')}<hr><small>${esc(me.name)} — ${ROLES[me.role]}</small><button onclick="out()">تسجيل خروج</button></aside>${NAVO?'<div class="navbg" onclick="NAVO=false;draw()"></div>':''}<main>${V[view]()}</main>`}
 async function login(){const b=$('#lb');b.disabled=true;try{await auth.signInWithEmailAndPassword(val('le').trim(),val('lp'))}catch(e){b.disabled=false;toast(e.code=='auth/network-request-failed'?'لا يوجد اتصال بالإنترنت':'بيانات الدخول غير صحيحة')}}
 async function reset(){const e=val('le').trim();if(!e)return toast('اكتب الإيميل أولًا');try{await auth.sendPasswordResetEmail(e);toast('لو الإيميل مسجل هيوصله رابط إعادة التعيين')}catch(x){toast('تعذر الإرسال: '+x.code)}}
 const tb=(h,r)=>`<div class="sc"><table><tr>${h.map(x=>`<th>${x}</th>`).join('')}</tr>${r.map(x=>`<tr>${x.map(c=>`<td>${c}</td>`).join('')}</tr>`).join('')||`<tr><td colspan="${h.length}">لا توجد بيانات</td></tr>`}</table></div>`,V={};
@@ -242,6 +243,7 @@ async function rsGo(){if(busy)return;if(val('rt').trim()!=='تصفير')return t
  }catch(e){toast(e.code=='auth/wrong-password'||e.code=='auth/invalid-credential'?'كلمة السر غلط':(e.message||e.code))}
  busy=0;const bb=$('#rb');if(bb)bb.disabled=false}
 
+let NAVO=false;
 const NAV=[['dash','لوحة التحكم'],['orders','الطلبات الرئيسية'],['confirm','التأكيدات'],['ship','الشحن والتسليم'],['ret','المرتجعات'],['products','المنتجات والمخزون'],['pricing','آلة التسعير'],['pur','المشتريات والموردون'],['fin','المالية والخزينة'],['notices','إشعارات الحسابات'],['ads','الإعلانات والتسويق'],['ast','الأصول والعهد'],['wag','الأجور والعمولات'],['att','الحضور والانصراف'],['mv','حركة المخزون'],['rep','التقارير والتصدير'],['set','الإعدادات']];
 const PG=Object.fromEntries(NAV);
 const RL={admin:'مدير عام',assistant:'مساعد المدير',orders:'مسؤول الطلبات',stock:'مسؤول المخزون',pricing:'مسؤول التسعير',accountant:'محاسب',viewer:'قراءة فقط'};
@@ -290,7 +292,6 @@ async function nPay2(){if(busy)return;const a=+val('npa'),m=val('npm').trim();if
   t.set(fs.doc('money/nt_'+nid+'_'+k),{t:Date.now(),k:'in',cat:'تحصيل طلب',amt:a,method:m,ref:nd.oid,no:o.no,note:'',u:me.name,void:false});
   t.update(nr,{st:'تم الإيداع',doneBy:me.name,doneT:Date.now()})});aud('money','تأكيد إيداع طلب #'+nid);closeM();toast('تم تأكيد الإيداع')}catch(e){toast(e.message||e.code)}busy=0}
 async function nLater(nid){try{await fs.doc('notices/'+nid).update({st:'مؤجل',doneBy:me.name,doneT:Date.now()});aud('money','تأجيل إشعار '+nid);toast('تم التأجيل')}catch(e){toast(e.code)}}
-
 V.users=()=>`<h3>المستخدمون والصلاحيات</h3><p><small>الدور يحدد الصلاحيات الفعلية على البيانات. الصفحات تحدد اللي بيشوفه المستخدم في القائمة. المدير العام يشوف كل شيء، ومساعد المدير ما يقدرش يدير المستخدمين أو الإعدادات.</small></p><button class="b" onclick="uform()">+ مستخدم</button>`+
  tb(['الاسم','الإيميل','الدور','الصفحات','الحالة',''],U.map(u=>[esc(u.name),esc(u.email),RL[u.role]||u.role,u.role=='admin'?'الكل':pagesOf(u).length+' صفحة',u.active?'مفعّل':'معطّل',`<button class="b s" onclick="uform('${u.id}')">تعديل</button>`]));
 function uPreset(r){const pg=PRE[r]||[];document.querySelectorAll('.pgc').forEach(c=>c.checked=pg.includes(c.value))}
